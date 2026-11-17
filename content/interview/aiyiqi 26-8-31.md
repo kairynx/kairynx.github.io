@@ -2,10 +2,10 @@
 company: 爱奇艺
 position: 前端实习生
 date: 2026-08-31
-stage: 一面 · 时长
+stage: 一面 · 时长：30分钟
 result: 未通过
-tags: 待填写
-summary: 这是一条占位记录，用来展示排版。把 content/interview/ 下的 md 换成你自己的真实记录，或直接删掉这个文件。
+tags: react、javascript、http、tcp/ip
+summary: 手写不过关，面试少了，太紧张
 ---
 
 # 面试问题
@@ -14,7 +14,7 @@ summary: 这是一条占位记录，用来展示排版。把 content/interview/ 
 1. **setState 是同步还是异步？**
     -  React 18 之前和 React 18 之后有什么区别？ 
     -  不同场景下（React 事件、定时器、原生事件）有什么区别？ 
-+ 18前在setTimeout、JS原生事件中是同步，其他异步
+ 18前在setTimeout、JS原生事件中是同步，其他异步
 + 18后就是完全异步
 
 ### React 组件通信
