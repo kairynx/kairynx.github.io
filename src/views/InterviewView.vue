@@ -8,8 +8,19 @@ type ResultFilter = '全部' | InterviewRecord['result']
 const filters: ResultFilter[] = ['全部', '已通过', '流程中', '未通过']
 const activeFilter = ref<ResultFilter>('全部')
 
-/** 每张卡片各自记录展开状态 */
-const opened = ref<Record<string, string[]>>({})
+/** 每张卡片各自记录展开状态：默认全部展开，避免内容藏在折叠里看不见 */
+const opened = ref<Record<string, string[]>>(
+  Object.fromEntries(
+    interviewRecords.map((record) => [
+      record.id,
+      record.chapters.flatMap((chapter, ci) =>
+        chapter.panels
+          .map((panel, pi) => (panel.title ? `${ci}-${pi}` : ''))
+          .filter(Boolean)
+      )
+    ])
+  )
+)
 
 const list = computed(() =>
   activeFilter.value === '全部'
@@ -77,22 +88,22 @@ const countOf = (filter: ResultFilter) =>
               </el-tag>
             </div>
 
-            <el-collapse v-model="opened[item.id]" class="detail">
-              <el-collapse-item name="q" title="面试题目">
-                <div v-for="group in item.questions" :key="group.group" class="q-group">
-                  <h4>{{ group.group }}</h4>
-                  <ol>
-                    <li v-for="(q, i) in group.items" :key="i">{{ q }}</li>
-                  </ol>
-                </div>
-              </el-collapse-item>
+            <div v-if="item.chapters.length" class="detail">
+              <el-collapse v-model="opened[item.id]">
+                <template v-for="(chapter, ci) in item.chapters" :key="ci">
+                  <p v-if="chapter.title" class="chapter">{{ chapter.title }}</p>
 
-              <el-collapse-item name="r" title="复盘与反思">
-                <ul class="review">
-                  <li v-for="(r, i) in item.review" :key="i">{{ r }}</li>
-                </ul>
-              </el-collapse-item>
-            </el-collapse>
+                  <template v-for="(panel, pi) in chapter.panels" :key="pi">
+                    <el-collapse-item v-if="panel.title" :name="`${ci}-${pi}`" :title="panel.title">
+                      <!-- 正文来自仓库内的 md 文件，按 Markdown 渲染 -->
+                      <div class="markdown panel" v-html="panel.html" />
+                    </el-collapse-item>
+                    <div v-else class="markdown panel" v-html="panel.html" />
+                  </template>
+                </template>
+              </el-collapse>
+            </div>
+            <p v-else class="summary">这条记录还没有写正文。</p>
           </div>
         </article>
       </div>
@@ -233,23 +244,64 @@ const countOf = (filter: ResultFilter) =>
   padding-bottom: 8px;
 }
 
-.q-group h4 {
-  margin: 12px 0 6px;
-  font-size: 13.5px;
-  color: var(--brand);
+/* 章节（正文里的 # 标题） */
+.chapter {
+  margin: 22px 0 4px;
+  padding-bottom: 7px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 1px;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
 }
 
-.q-group ol,
-.review {
-  margin: 0;
-  padding-left: 20px;
+.chapter:first-child {
+  margin-top: 14px;
 }
 
-.q-group li,
-.review li {
-  font-size: 13.5px;
-  line-height: 1.95;
-  color: var(--ink-2);
+/* 小节正文：复用全局 .markdown 的排版，字号收紧一点 */
+.panel {
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.panel :deep(> *:first-child) {
+  margin-top: 0;
+}
+
+.panel :deep(h1),
+.panel :deep(h2),
+.panel :deep(h3),
+.panel :deep(h4) {
+  margin: 18px 0 8px;
+  padding-left: 0;
+  font-size: 14.5px;
+}
+
+.panel :deep(h1)::before,
+.panel :deep(h2)::before {
+  display: none;
+}
+
+.panel :deep(p) {
+  margin-bottom: 10px;
+}
+
+.panel :deep(ul),
+.panel :deep(ol) {
+  margin-bottom: 10px;
+}
+
+.panel :deep(hr) {
+  margin: 18px 0;
+  border: none;
+  border-top: 1px dashed var(--line);
+}
+
+/* 正文末尾/开头的分隔线不占位，避免每块底部拖出一段空白 */
+.panel :deep(> hr:first-child),
+.panel :deep(> hr:last-child) {
+  display: none;
 }
 
 @media (max-width: 640px) {

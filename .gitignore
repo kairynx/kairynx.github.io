@@ -7,3 +7,6 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 *.log
+
+# 编辑器本地历史（VS Code Local History），不进仓库
+.history

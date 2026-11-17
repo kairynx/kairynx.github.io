@@ -4,15 +4,27 @@
  * 你只需要在 content/interview/ 下新建或编辑 .md 文件，页面自动更新。
  * 文件名就是这条记录的唯一 id，删掉文件即删除记录。
  *
- * 文件格式见 content/interview/README 或仓库根目录 README.md。
+ * 正文规则（尽量宽松，写什么显示什么）：
+ *   # 章节标题      → 卡片里的一个分组标签
+ *   ## 小节标题     → 一个可折叠块
+ *   其余内容        → 原样按 Markdown 渲染（列表 / 表格 / 代码块 / 引用都支持）
+ * 详见仓库根目录 README.md。
  */
-import { idFromPath, parseFrontMatter, splitTags } from '../lib/markdown'
+import { idFromPath, parseFrontMatter, renderMarkdown, splitTags } from '../lib/markdown'
 
-export interface InterviewQuestionGroup {
-  /** 分组标题，例如「JavaScript 基础」 */
-  group: string
-  /** 该组下的问题列表 */
-  items: string[]
+/** 一个可折叠小节（对应正文里的 ## 标题） */
+export interface InterviewPanel {
+  /** 小节标题；正文开头没有标题的内容为空串 */
+  title: string
+  /** 已渲染好的 HTML */
+  html: string
+}
+
+/** 一个章节（对应正文里的 # 标题） */
+export interface InterviewChapter {
+  /** 章节标题；文件里没写 # 标题时为空串 */
+  title: string
+  panels: InterviewPanel[]
 }
 
 export interface InterviewRecord {
@@ -28,55 +40,66 @@ export interface InterviewRecord {
   tags: string[]
   /** 一句话总结 */
   summary: string
-  questions: InterviewQuestionGroup[]
-  /** 复盘与反思 */
-  review: string[]
+  /** 正文解析结果 */
+  chapters: InterviewChapter[]
 }
 
 const RESULT_VALUES: InterviewRecord['result'][] = ['已通过', '流程中', '未通过']
 
-/** 正文约定：`## 题目` 下用 `### 分组` + `- 题目`；`## 复盘` 下用 `- 要点` */
-function parseBody(body: string) {
-  const questions: InterviewQuestionGroup[] = []
-  const review: string[] = []
+/**
+ * 按 # / ## 切分正文，其余内容整段交给 marked 渲染。
+ * 只有「空的小节」会被丢掉——它本来就没有内容。
+ */
+function parseBody(body: string): InterviewChapter[] {
+  const chapters: InterviewChapter[] = []
 
-  let zone: 'question' | 'review' = 'question'
-  let current: InterviewQuestionGroup | null = null
+  let chapter: InterviewChapter = { title: '', panels: [] }
+  let panel: InterviewPanel | null = null
+  let buffer: string[] = []
 
-  for (const rawLine of body.split('\n')) {
-    const line = rawLine.trim()
+  const flushPanel = () => {
+    const text = buffer.join('\n').trim()
+    buffer = []
+    if (!text) return
 
-    const h2 = /^##\s+(.+)$/.exec(line)
-    if (h2) {
-      zone = /复盘|反思|总结/.test(h2[1]) ? 'review' : 'question'
-      current = null
-      continue
-    }
-
-    const h3 = /^###\s+(.+)$/.exec(line)
-    if (h3) {
-      if (zone === 'question') {
-        current = { group: h3[1].trim(), items: [] }
-        questions.push(current)
-      }
-      continue
-    }
-
-    const li = /^[-*]\s+(.+)$/.exec(line)
-    if (!li) continue
-
-    if (zone === 'review') {
-      review.push(li[1].trim())
+    const html = renderMarkdown(text)
+    if (panel) {
+      panel.html = html
     } else {
-      if (!current) {
-        current = { group: '题目', items: [] }
-        questions.push(current)
-      }
-      current.items.push(li[1].trim())
+      panel = { title: '', html }
+      chapter.panels.push(panel)
     }
   }
 
-  return { questions, review }
+  const flushChapter = () => {
+    flushPanel()
+    const panels = chapter.panels.filter((p) => p.html.trim())
+    if (panels.length) chapters.push({ title: chapter.title, panels })
+    chapter = { title: '', panels: [] }
+    panel = null
+  }
+
+  for (const line of body.split('\n')) {
+    const h1 = /^#\s+(.+?)\s*#*\s*$/.exec(line)
+    if (h1) {
+      flushChapter()
+      chapter.title = h1[1].trim()
+      continue
+    }
+
+    const h2 = /^##\s+(.+?)\s*#*\s*$/.exec(line)
+    if (h2) {
+      flushPanel()
+      panel = { title: h2[1].trim(), html: '' }
+      chapter.panels.push(panel)
+      continue
+    }
+
+    buffer.push(line)
+  }
+
+  flushChapter()
+  return chapters
 }
 
 const files = import.meta.glob('/content/interview/*.md', {
@@ -88,7 +111,6 @@ const files = import.meta.glob('/content/interview/*.md', {
 export const interviewRecords: InterviewRecord[] = Object.entries(files)
   .map(([path, raw]) => {
     const { data, body } = parseFrontMatter(raw)
-    const { questions, review } = parseBody(body)
     const result = RESULT_VALUES.includes(data.result as InterviewRecord['result'])
       ? (data.result as InterviewRecord['result'])
       : '流程中'
@@ -102,8 +124,7 @@ export const interviewRecords: InterviewRecord[] = Object.entries(files)
       result,
       tags: splitTags(data.tags),
       summary: data.summary || '',
-      questions,
-      review
+      chapters: parseBody(body)
     }
   })
   .sort((a, b) => (a.date < b.date ? 1 : -1))
