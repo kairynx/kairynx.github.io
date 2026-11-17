@@ -1,0 +1,127 @@
+/* ============ 全局变量与基础重置 ============ */
+:root {
+  --el-color-primary: #4f6ef7;
+  --el-color-primary-light-3: #7b92fa;
+  --el-color-primary-light-5: #a5b2fc;
+  --el-color-primary-light-7: #cfd7fd;
+  --el-color-primary-light-8: #e2e7fe;
+  --el-color-primary-light-9: #f0f3ff;
+  --el-color-primary-dark-2: #3f58c5;
+
+  --brand: #4f6ef7;
+  --brand-2: #7c5cf7;
+  --ink: #1c2033;
+  --ink-2: #4e5466;
+  --ink-3: #8a90a2;
+  --line: #ebedf5;
+  --bg: #ffffff;
+  --bg-soft: #f7f8fc;
+  --radius: 16px;
+  --shadow-sm: 0 1px 2px rgba(28, 32, 51, 0.04), 0 4px 16px rgba(28, 32, 51, 0.06);
+  --shadow-md: 0 8px 32px rgba(79, 110, 247, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(79, 110, 247, 0.16);
+}
+
+/* ============ 通用容器 ============ */
+.container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.section-desc {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
+}
+
+/* 代码块 */
+pre.code-block {
+  margin: 14px 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  border-radius: 12px;
+  background: #1e2233;
+  color: #e6e9f5;
+  font-size: 13.5px;
+  line-height: 1.75;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
+}
+
+/* 页面切换动画 */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 18px;
+  }
+  .section-title {
+    font-size: 19px;
+  }
+}
+
+/* 尊重系统的「减少动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active {
+    transition: none;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
