@@ -40,16 +40,7 @@ const related = computed(() => {
             </div>
           </div>
 
-          <div class="body">
-            <section v-for="(s, i) in article.sections" :key="i" class="section">
-              <h2 v-if="s.heading">{{ s.heading }}</h2>
-              <p v-if="s.text" class="text">{{ s.text }}</p>
-              <ul v-if="s.list" class="list">
-                <li v-for="(li, j) in s.list" :key="j">{{ li }}</li>
-              </ul>
-              <pre v-if="s.code" class="code-block"><code>{{ s.code }}</code></pre>
-            </section>
-          </div>
+          <div class="body markdown" v-html="article.html"></div>
         </article>
 
         <section v-if="related.length" class="related">
@@ -143,53 +134,6 @@ const related = computed(() => {
 
 .body {
   padding-top: 10px;
-}
-
-.section {
-  margin-top: 30px;
-}
-
-.section h2 {
-  position: relative;
-  margin: 0 0 12px;
-  padding-left: 13px;
-  font-size: 18px;
-  font-weight: 750;
-  letter-spacing: -0.2px;
-}
-
-.section h2::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 4px;
-  width: 4px;
-  height: 17px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--brand), var(--brand-2));
-}
-
-.text {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.95;
-  color: var(--ink-2);
-}
-
-.list {
-  margin: 0;
-  padding-left: 22px;
-}
-
-.list li {
-  font-size: 14.5px;
-  line-height: 1.95;
-  color: var(--ink-2);
-  margin-bottom: 4px;
-}
-
-.list li::marker {
-  color: var(--el-color-primary-light-3);
 }
 
 .related {
